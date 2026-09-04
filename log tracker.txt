@@ -1,0 +1,4 @@
+09/03/2026 10:58 A.M I started to create the project, wachted MS teams and learn about the activity
+11:21 started to study type script documetnation. I learned that type script is the same of Javascript but with a validation net of differnet type system rules, in other words, is safer and more consistand 
+11:45 my first ts file created
+00:26 continue studying typescript documentation
