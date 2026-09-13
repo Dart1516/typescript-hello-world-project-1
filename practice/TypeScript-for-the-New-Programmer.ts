@@ -58,9 +58,18 @@ interface Backpack<Type> {
   get: () => Type;
 }
  
-// This line is a shortcut to tell TypeScript there is a
-// constant called `backpack`, and to not worry about where it came from.
-declare const backpack: Backpack<string>;
+let backpackItem: string = "notebook";
+
+const backpack: Backpack<string> = {
+  add: (obj: string): void => {
+    backpackItem = obj;
+  },
+  get: (): string => backpackItem
+};
  
 // object is a string, because we declared it above as the variable part of Backpack.
 const object = backpack.get();
+console.log(object);
+
+backpack.add("pencil");
+console.log(backpack.get());

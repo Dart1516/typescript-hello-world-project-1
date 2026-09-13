@@ -1,4 +1,66 @@
-09/03/2026 10:58 A.M I started to create the project, wachted MS teams and learn about the activity
-11:21 started to study type script documetnation. I learned that type script is the same of Javascript but with a validation net of differnet type system rules, in other words, is safer and more consistand 
-11:45 my first ts file created
-00:26 continue studying typescript documentation
+TYPESCRIPT PROJECT TIME LOG
+===========================
+
+Date format: DD/MM/YYYY
+Times are local times. Approximate times are marked as such.
+
+03/09/2026
+----------
+10:58 - 17:00 | 6 hours 02 minutes
+Studied TypeScript and started the project.
+
+Topics and resources studied:
+- TypeScript from Scratch:
+	https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html
+- TypeScript in 5 Minutes:
+	https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html
+- TypeScript in 5 Minutes: Object-Oriented Programming:
+	https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-oop.html
+- TypeScript in 5 Minutes: Functions:
+	https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html
+
+Learning notes:
+- TypeScript adds a type system and editor support to JavaScript.
+- TypeScript code is converted to JavaScript before it runs.
+- Started learning objects, classes, types, and functions.
+- Started reading the functions material but did not finish it.
+
+12/09/2026
+----------
+17:00 - 20:00 | Approximately 3 hours
+Studied how to download and use TypeScript:
+- https://www.typescriptlang.org/download/
+
+Also studied Antigravity and the purpose of a tsconfig file.
+
+12/09/2026 - 13/09/2026
+------------------------
+23:00 - 01:10 | 2 hours 10 minutes
+Started creating the different TypeScript practices and the practice folder.
+Created simple exercises for types, interfaces, classes, functions, arrays,
+generics, asynchronous functions, exceptions, recursion, API requests, and
+other TypeScript features used by the dictionary project.
+
+Reorganized the project files and continued improving the examples until
+01:10 on 13/09/2026.
+
+13/09/2026
+----------
+01:10 - 01:30 | 20 minutes
+Completed the final review of the dictionary program and the practice files.
+Added the missing console, stream, HTTP response, readonly, and Promise.all
+examples. Verified that the dictionary and practices run correctly.
+
+The TypeScript project was completed at 01:30 on 13/09/2026.
+
+TOTAL TIME
+----------
+Approximately 11 hours 32 minutes.
+
+REMAINING TIME FOR THE 20-HOUR REQUIREMENT
+-------------------------------------------
+Approximately 8 hours 28 minutes remaining.
+
+Note: The 17:00 - 20:00 session was recorded as three hours because the
+study ended around 19:00 or 20:00. If it actually ended at 19:00, the total
+would be approximately 10 hours 32 minutes and 9 hours 28 minutes would remain.
