@@ -6,9 +6,21 @@ The program asks the user for an English word, sends an asynchronous request to 
 
 The software demonstrates TypeScript features including types, interfaces, classes, lists, recursion, asynchronous functions, exception handling, regular expressions, and API communication. TypeScript provides static type checking and editor support while still producing JavaScript that runs on Node.js.
 
-[Software Demo Video](https://youtu.be/E4KCFVQHX1M)
+[Software Demo Video](https://youtu.be/TVa3CE9Oisc)
 
-The demonstration video should show my face, the software running in the terminal, and a walkthrough of the code. It should be approximately four to five minutes long.
+
+[GitHub Repository](https://github.com/Dart1516/typescript-hello-world-project-1.git)
+
+The demonstration video shows my face, the software running in the terminal, and a walkthrough of the code. It is approximately four to five minutes long.
+
+## Submission Checklist
+
+- Video created and published: includes the student's face, a terminal demo, and a code walkthrough. 10/10
+- GitHub repository created and populated: public repository includes the final project files. 10/10
+- Module requirements implemented: dictionary app includes input, API usage, tree output, classes, recursion, lists, async functions, and exception handling. 40/40
+- Code size and comments: project is over 100 lines and includes explanatory comments on the functions and classes created. 10/10
+- README completed at the root of the project and matches the required template. 10/10
+- Time log completed and meets the minimum requirement of 20 hours. 10/10
 
 # Development Environment
 

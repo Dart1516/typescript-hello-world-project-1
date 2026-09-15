@@ -1,156 +1,86 @@
-// ============================================================================
-// 00. CONSOLE BASICS: stdin AND stdout
-// ============================================================================
+import * as readline from 'readline';
+import { stdin as input, stdout as output } from 'node:process';
 
-// Node.js gives a terminal two important communication channels:
-// - stdin means "standard input": data typed by the user.
-// - stdout means "standard output": text printed to the terminal.
-//
-// TypeScript normally learns these types from the @types/node package.
-// This project does not install that package, so we describe only the
-// small parts of stdin and stdout that this program needs.
-interface TerminalInput {
-    // Tell Node.js to give us text instead of raw bytes.
-    setEncoding(encoding: string): void;
-
-    // Listen for data typed by the user.
-    on(event: "data", listener: (textTypedByUser: string) => void): this;
-
-    // Stop listening after the first answer is received.
-    removeListener(event: "data", listener: (textTypedByUser: string) => void): this;
-}
-
-interface TerminalOutput {
-    // Write text to the terminal without automatically adding a new line.
-    write(text: string): boolean;
-}
-
-interface NodeTerminalProcess {
-    // stdin is the keyboard input stream.
-    stdin: TerminalInput;
-
-    // stdout is the terminal output stream.
-    stdout: TerminalOutput;
-}
-
-interface TerminalQuestionTool {
-    // Show a question and wait asynchronously for the user's answer.
-    askQuestion(promptText: string): Promise<string>;
-
-    // Finish using the terminal input.
-    close(): void;
-}
-
-// globalThis is the shared global object available in JavaScript and Node.js.
-// Here we tell TypeScript that this global object contains Node's process.
-const nodeTerminalProcess = (
-    globalThis as typeof globalThis & { process: NodeTerminalProcess }
-).process;
-
-// Give the two streams descriptive names so their purpose is easy to see.
-const terminalInput = nodeTerminalProcess.stdin;
-const terminalOutput = nodeTerminalProcess.stdout;
-
-// Node's readline package would normally provide this question feature.
-// This small local version avoids requiring @types/node in this beginner project.
-const terminalQuestionTool = {
-    createTerminalQuestionTool(
-        terminalStreams: { input: TerminalInput; output: TerminalOutput }
-    ): TerminalQuestionTool {
-        return {
-            askQuestion(promptText: string): Promise<string> {
-                // stdout displays the question before waiting for input.
-                terminalStreams.output.write(promptText);
-                terminalStreams.input.setEncoding("utf8");
-
-                return new Promise((resolve) => {
-                    // This function runs when the user types an answer.
-                    const receiveUserAnswer = (typedText: string): void => {
-                        // We need only one answer, so remove the listener now.
-                        terminalStreams.input.removeListener("data", receiveUserAnswer);
-
-                        // A terminal answer normally ends with a line break.
-                        // Keep only the first line and return it to the caller.
-                        const firstLine = typedText.split(/\r?\n/, 1)[0] ?? "";
-                        resolve(firstLine);
-                    };
-
-                    // "data" is an event: Node calls our function when input arrives.
-                    terminalStreams.input.on("data", receiveUserAnswer);
-                });
-            },
-            close(): void {
-                // There is no extra resource to close in this small implementation.
-                return;
-            }
-        };
-    }
-};
-
-// ============================================================================
-// 01. TYPES USED BY THE DICTIONARY
-// ============================================================================
+// STUDENT NOTE: Setup the readline interface to take user input from terminal (stdin/stdout).
+const rl = readline.createInterface({ input, output });
 
 /**
- * Interface representing the structure of a node in the vocabulary tree.
+ * STUDENT NOTE: Helper function to convert readline's callback-based prompt into a Promise.
+ * This allows us to use modern 'async/await' syntax when asking questions in CLI.
  */
+function askQuestion(promptText: string): Promise<string> {
+    return new Promise((resolve) => {
+        rl.question(promptText, (answer: string) => {
+            resolve(answer.trim());
+        });
+    });
+}
+
+// STUDENT NOTE: Interface defining our recursive tree structure.
+// Each node holds a word, its definition, and an array of child nodes (other words).
 interface WordNode {
     word: string;
     definition: string;
     children: WordNode[];
 }
 
-/**
- * Interface representing Datamuse API raw item response.
- */
+// STUDENT NOTE: Type interface mapping the exact JSON structure returned by Datamuse API.
 interface DatamuseEntry {
     word: string;
     defs?: string[];
 }
 
-// ============================================================================
-// 02. CLASS: DictionaryClient
-// ============================================================================
-
 /**
- * Handles communication with external dictionary API.
+ * CLASS 1: DictionaryClient
+ * REQUIREMENT: Asynchronous HTTP request handling with API integration and error handling.
  */
 class DictionaryClient {
-    // This class has one responsibility: communicate with the dictionary API.
+    // API endpoint base URL
     private readonly apiUrl: string = "https://api.datamuse.com/words";
 
     /**
      * Fetches the definition of a given word asynchronously.
-     * Throws an exception if the word is not found or request fails.
+     * Includes timeout cancellation and HTTP error handling.
      */
     async fetchDefinition(word: string): Promise<string> {
+        // STUDENT NOTE: encodeURIComponent ensures special characters don't break the web URL.
         const encodedWord = encodeURIComponent(word);
+        
+        // STUDENT NOTE: Query params:
+        // ?sp= -> Spelled like (exact match)
+        // &md=d -> Request metadata definitions ('defs' array)
+        // &max=1 -> Limit response payload to 1 result
         const requestUrl = `${this.apiUrl}?sp=${encodedWord}&md=d&max=1`;
+
+        // STUDENT NOTE: AbortController prevents hanging requests by cancelling after 10 seconds.
         const abortController = new AbortController();
         const timeoutId = setTimeout(() => abortController.abort(), 10000);
 
         try {
             const response = await fetch(requestUrl, { signal: abortController.signal });
 
+            // Catch HTTP errors (e.g., 404, 500)
             if (!response.ok) {
                 throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
             }
 
             const entries = (await response.json()) as DatamuseEntry[];
-
             const firstEntry = entries[0];
+
+            // Validation: Check if definitions exist in the JSON response
             if (!firstEntry?.defs?.length) {
                 throw new Error(`No definition found for "${word}".`);
             }
 
-            // Clean definition string (Datamuse prefixes definitions with "n\t", "v\t", etc.)
-            const rawDef = firstEntry.defs[0];
-            if (!rawDef) {
+            const rawDefinition = firstEntry.defs[0];
+            if (!rawDefinition) {
                 throw new Error(`Definition text is empty for "${word}".`);
             }
 
-            return rawDef.replace(/^[a-z]+\t/, "").trim();
+            // STUDENT NOTE: Regex cleanup to strip part-of-speech prefixes (like "n\t" or "adj\t")
+            return rawDefinition.replace(/^[a-z]+\t/, "").trim();
         } catch (error) {
+            // Differentiate between network timeout and general API errors
             if (error instanceof Error && error.name === "AbortError") {
                 throw new Error("DictionaryClient Error: The request timed out after 10 seconds.");
             }
@@ -158,24 +88,22 @@ class DictionaryClient {
             const errorMessage = error instanceof Error ? error.message : "Unknown API error.";
             throw new Error(`DictionaryClient Error: ${errorMessage}`);
         } finally {
+            // Clean up timer memory leak regardless of success/failure
             clearTimeout(timeoutId);
         }
     }
 }
 
-// ============================================================================
-// 3. CLASS: WordRecorder
-// ============================================================================
-
 /**
- * Remembers expanded words and filters common words from definitions.
- */
+ * CLASS 2: WordRecorder
+ * REQUIREMENT: History tracking to prevent infinite recursion loops and stop-word filtering.
+ */ 
 class WordRecorder {
-     // This list grows as the recursive search visits new words.
-     private readonly expandedWords: string[] = [];
+    // Internal state array keeping track of visited words across recursive calls
+    private readonly expandedWords: string[] = [];
 
-     // These common words do not add useful meaning to the vocabulary tree.
-     private readonly functionWords: string[] = [
+    // STUDENT NOTE: List of common English function words (stop words) to ignore during extraction
+    private readonly functionWords: string[] = [
         "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
         "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
         "this", "but", "his", "by", "from", "they", "we", "say", "her",
@@ -185,35 +113,39 @@ class WordRecorder {
     ];
 
     /**
-     * Return true when a word was already expanded.
+     * Checks if a word was already expanded in previous tree branches.
      */
     hasBeenExpanded(word: string): boolean {
         return this.expandedWords.includes(word.toLowerCase());
     }
 
     /**
-    * Save a word in lowercase so comparisons are consistent.
+     * Marks a word as processed in our global history list.
      */
     record(word: string): void {
         this.expandedWords.push(word.toLowerCase());
     }
 
     /**
-     * Find useful words in a definition that can be expanded next.
+     * Parses a definition text and picks candidate words to explore next.
+     * Uses Regex to match words with >= 4 letters and filters out stop words / visited words.
      */
     extractCandidateWords(definition: string, maximumWords: number = 2): string[] {
+        // Match words with 4 or more alphabetic characters
         const wordsInDefinition: string[] = definition.toLowerCase().match(/[a-z]{4,}/g) ?? [];
         const candidateWords: string[] = [];
 
         for (const word of wordsInDefinition) {
             const isCommonWord = this.functionWords.includes(word);
-            const wasAlreadyExpanded = this.hasBeenExpanded(word);
+            const alreadyExpanded = this.hasBeenExpanded(word);
             const isAlreadyCandidate = candidateWords.includes(word);
 
-            if (!isCommonWord && !wasAlreadyExpanded && !isAlreadyCandidate) {
+            // Filter logic: Must not be common, already visited, or duplicate in current candidate list
+            if (!isCommonWord && !alreadyExpanded && !isAlreadyCandidate) {
                 candidateWords.push(word);
             }
 
+            // Cap the branching factor (maximum children per node)
             if (candidateWords.length >= maximumWords) {
                 break;
             }
@@ -223,40 +155,37 @@ class WordRecorder {
     }
 }
 
-// ============================================================================
-// 4. CLASS: TreePrinter
-// ============================================================================
-
 /**
- * Formats and displays the vocabulary tree in the terminal.
+ * CLASS 3: TreePrinter
+ * REQUIREMENT: Visual formatting and display of the recursive tree in CLI using ANSI colors.
  */
 class TreePrinter {
     /**
-     * Print one node, then print all of its children below it.
+     * Recursively traverses and displays the WordNode hierarchy.
      */
     printTree(node: WordNode, prefix: string = "", isLastNode: boolean = true): void {
+        // Choose ASCII tree branch symbols
         const branchSymbol = isLastNode ? "└── " : "├── ";
+        
+        // STUDENT NOTE: '\x1b[36m' adds Cyan color in terminal, '\x1b[0m' resets formatting.
         const coloredWord = `\x1b[36m${node.word.toUpperCase()}\x1b[0m`;
         console.log(`${prefix}${branchSymbol}${coloredWord}: ${node.definition}`);
 
+        // Calculate indentation prefix for child branches
         const childPrefix = prefix + (isLastNode ? "    " : "│   ");
         for (let index = 0; index < node.children.length; index++) {
-            const childNode = node.children[index];
-            if (childNode) {
+            const child = node.children[index];
+            if (child) {
                 const isLastChild = index === node.children.length - 1;
-                this.printTree(childNode, childPrefix, isLastChild);
+                this.printTree(child, childPrefix, isLastChild);
             }
         }
     }
 }
 
-// ============================================================================
-// 5. RECURSIVE TREE BUILDING
-// ============================================================================
-
 /**
- * Explore a word and recursively explore words from its definition.
- * remainingDepth tells the function when it must stop.
+ * RECURSIVE ENGINE FUNCTION: exploreWord
+ * REQUIREMENT: Core recursive algorithm that fetches data and builds the tree up to a given depth.
  */
 async function exploreWord(
     word: string,
@@ -264,74 +193,64 @@ async function exploreWord(
     dictionaryClient: DictionaryClient,
     wordRecorder: WordRecorder
 ): Promise<WordNode> {
-    // Record this word so it cannot create an infinite cycle.
+    // Step 1: Mark word as visited to avoid cycles
     wordRecorder.record(word);
 
+    // Step 2: Fetch definition asynchronously
     const definition = await dictionaryClient.fetchDefinition(word);
-
-    const wordNode: WordNode = {
+    const node: WordNode = {
         word,
         definition,
         children: []
     };
 
-    // Base case: depth zero means this word should not be expanded.
+    // STUDENT NOTE: RECURSION BASE CASE
+    // When remainingDepth reaches 0, stop expanding and return leaf node.
     if (remainingDepth === 0) {
-        return wordNode;
+        return node;
     }
 
-    // Find up to two useful words in the definition.
+    // Step 3: Extract candidate words from definition for child nodes
     const candidateWords = wordRecorder.extractCandidateWords(definition, 2);
 
-    // Start both child requests together instead of waiting for them one by one.
-    const childResults = await Promise.all(
+    // STUDENT NOTE: RECURSIVE STEP
+    // Use Promise.all to concurrently execute asynchronous recursive calls for all children.
+    const children = await Promise.all(
         candidateWords.map(async (candidateWord): Promise<WordNode | null> => {
             try {
-                return await exploreWord(
-                    candidateWord,
-                    remainingDepth - 1,
-                    dictionaryClient,
-                    wordRecorder
-                );
+                // Decrement depth towards base case (remainingDepth - 1)
+                return await exploreWord(candidateWord, remainingDepth - 1, dictionaryClient, wordRecorder);
             } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : "Unknown error.";
-                console.warn(`\x1b[33m[Skip] Could not expand "${candidateWord}": ${errorMessage}\x1b[0m`);
+                const message = error instanceof Error ? error.message : "Unknown error.";
+                // Soft error handling: log warning yellow text ('\x1b[33m') and skip broken child branch
+                console.warn(`\x1b[33m[Skip] Could not expand "${candidateWord}": ${message}\x1b[0m`);
                 return null;
             }
         })
     );
 
-    for (const childResult of childResults) {
-        if (childResult) {
-            wordNode.children.push(childResult);
+    // Attach valid child nodes to current node
+    for (const child of children) {
+        if (child) {
+            node.children.push(child);
         }
     }
 
-    return wordNode;
+    return node;
 }
 
-// ============================================================================
-// 6. PROGRAM ENTRY POINT
-// ============================================================================
-
 /**
- * Run the complete vocabulary learning program.
+ * CLI ENTRY POINT: runDictionary
+ * Controls user interaction flow, instantiates service classes, and handles application errors.
  */
 async function runDictionary(): Promise<void> {
-    const terminalQuestionToolInstance = terminalQuestionTool.createTerminalQuestionTool({
-        input: terminalInput,
-        output: terminalOutput
-    });
-
     console.log("=========================================");
     console.log("  Vocabulary Tree Explorer (TypeScript)  ");
     console.log("=========================================\n");
 
     try {
-        const enteredWord = await terminalQuestionToolInstance.askQuestion(
-            "Enter an English word to explore: "
-        );
-        const cleanedWord = enteredWord.trim().toLowerCase();
+        const enteredWord = await askQuestion("Enter an English word to explore: ");
+        const cleanedWord = enteredWord.toLowerCase();
 
         if (!cleanedWord) {
             console.log("Please enter a valid word.");
@@ -340,29 +259,26 @@ async function runDictionary(): Promise<void> {
 
         console.log(`\nSearching and expanding "${cleanedWord}"...\n`);
 
+        // Instantiate core architectural modules
         const dictionaryClient = new DictionaryClient();
         const wordRecorder = new WordRecorder();
         const treePrinter = new TreePrinter();
 
-        // A depth of 1 prints the original word and two related words.
-        const vocabularyTree = await exploreWord(
-            cleanedWord,
-            1,
-            dictionaryClient,
-            wordRecorder
-        );
+        // Kick off recursive exploration starting at depth 1 (expands root + direct children)
+        const vocabularyTree = await exploreWord(cleanedWord, 1, dictionaryClient, wordRecorder);
 
+        // Display formatted CLI output
         console.log("Vocabulary Result Tree:\n");
         treePrinter.printTree(vocabularyTree);
         console.log("\nDone!");
     } catch (error) {
-        // Top-level Exception Handling
-        const errorMessage = error instanceof Error ? error.message : "Unknown program error.";
-        console.error(`\x1b[31mError: ${errorMessage}\x1b[0m`);
+        const message = error instanceof Error ? error.message : "Unknown program error.";
+        console.error(`\x1b[31mError: ${message}\x1b[0m`);
     } finally {
-        terminalQuestionToolInstance.close();
+        // Always close input stream to prevent memory leak / hanging terminal process
+        rl.close();
     }
 }
 
-// Execute application
+// Execute program
 runDictionary();

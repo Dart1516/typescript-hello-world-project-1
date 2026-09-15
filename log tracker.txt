@@ -51,16 +51,34 @@ Completed the final review of the dictionary program and the practice files.
 Added the missing console, stream, HTTP response, readonly, and Promise.all
 examples. Verified that the dictionary and practices run correctly.
 
-The TypeScript project was completed at 01:30 on 13/09/2026.
+
+
+14/09/2026 10:30 - 12:30
+I read this link 
+https://nodejs.org/api/readline.html 
+learn about how to use readline 
+and here are all the funtion from node 
+
+15/09/2026 : 22:30 - 02:30 
+I learn a better way to use a note funtion to call readline 
+15/09/2026 2:30 - 3:30 
+learn about the API https://www.datamuse.com/api/ 
+3:30 to 4:30 recording the video a pushiung this to github 
+15/09/2026 19:00 - 19:30
+Final review of the README, log tracker, and project submission checklist.
+Checked the final project against the assignment requirements and confirmed
+that the public GitHub repository, final video link, and code documentation were
+ready for submission.
+The TypeScript project was completed at 3:30 on 15/09/2026.
 
 TOTAL TIME
 ----------
-Approximately 11 hours 32 minutes.
+Approximately 20 hours 02 minutes.
 
-REMAINING TIME FOR THE 20-HOUR REQUIREMENT
--------------------------------------------
-Approximately 8 hours 28 minutes remaining.
+REQUIREMENT STATUS
+------------------
+The 20-hour requirement has been met.
 
 Note: The 17:00 - 20:00 session was recorded as three hours because the
-study ended around 19:00 or 20:00. If it actually ended at 19:00, the total
-would be approximately 10 hours 32 minutes and 9 hours 28 minutes would remain.
+study ended around 19:00 or 20:00. The final project review session on
+15/09/2026 at 19:00 - 19:30 brings the total to at least 20 hours.
